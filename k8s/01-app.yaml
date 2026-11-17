@@ -32,6 +32,7 @@ spec:
   template:
     metadata: {labels: {app: api, tier: api}}
     spec:
+      enableServiceLinks: false
       containers:
       - name: api
         image: microseg/api:1

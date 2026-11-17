@@ -1,0 +1,13 @@
+# CHI ap dung tren cum Cilium: thay phan egress cua api-policy (L4) khi bo api-policy.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: {name: api-egress-db, namespace: microseg}
+spec:
+  endpointSelector:
+    matchLabels: {tier: api}
+  egress:
+  - toEndpoints:
+    - matchLabels: {tier: db}
+    toPorts:
+    - ports:
+      - {port: "5432", protocol: TCP}
