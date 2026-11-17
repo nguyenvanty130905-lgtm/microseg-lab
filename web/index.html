@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>Microseg demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; }
+    li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1>Ghi chu (web &rarr; api &rarr; db)</h1>
+  <input id="t" placeholder="Noi dung ghi chu">
+  <button onclick="add()">Them</button>
+  <ul id="list"></ul>
+  <p id="msg"></p>
+  <script>
+    async function load() {
+      try {
+        const r = await fetch('/api/notes');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const d = await r.json();
+        document.getElementById('list').innerHTML = d.map(n => '<li>' + n.id + ': ' + n.text + '</li>').join('');
+        document.getElementById('msg').textContent = '';
+      } catch (e) { document.getElementById('msg').textContent = 'Loi: ' + e.message; }
+    }
+    async function add() {
+      const text = document.getElementById('t').value;
+      await fetch('/api/notes', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text}) });
+      document.getElementById('t').value = '';
+      load();
+    }
+    load();
+  </script>
+</body>
+</html>

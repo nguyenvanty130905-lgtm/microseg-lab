@@ -1,0 +1,70 @@
+name: netpol-tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  docker-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build netcheck image
+        run: docker build -t microseg/netcheck:1 tests/netcheck
+      - name: Start compose stack
+        run: docker compose up -d --build
+      - name: Wait for services
+        run: sleep 20
+      - name: Run policy matrix (docker)
+        run: python3 tests/run_matrix.py docker
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: matrix-docker
+          path: results/
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
+
+  k8s-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images
+        run: |
+          docker build -t microseg/netcheck:1 tests/netcheck
+          docker build -t microseg/api:1 api
+          docker build -t microseg/web:1 web
+      - name: Create kind cluster (no default CNI)
+        run: kind create cluster --name microseg --config k8s/kind-config.yaml
+      - name: Install Calico
+        run: |
+          kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+          kubectl wait --for=condition=Ready nodes --all --timeout=300s
+      - name: Load images into kind
+        run: |
+          kind load docker-image microseg/netcheck:1 --name microseg
+          kind load docker-image microseg/api:1 --name microseg
+          kind load docker-image microseg/web:1 --name microseg
+      - name: Deploy app and test pods
+        run: |
+          kubectl apply -f k8s/00-namespaces.yaml
+          kubectl apply -f k8s/01-app.yaml
+          kubectl apply -f k8s/02-tests.yaml
+          kubectl -n microseg wait --for=condition=Available deployment --all --timeout=240s
+          kubectl -n microseg wait --for=condition=Ready pod --all --timeout=240s
+          kubectl -n external wait --for=condition=Ready pod --all --timeout=120s
+          kubectl -n untrusted wait --for=condition=Ready pod --all --timeout=120s
+      - name: Apply NetworkPolicies
+        run: |
+          kubectl apply -f k8s/03-default-deny.yaml
+          kubectl apply -f k8s/04-allow-dns.yaml
+          kubectl apply -f k8s/05-tier-policies.yaml
+          sleep 10
+      - name: Run policy matrix (k8s)
+        run: python3 tests/run_matrix.py k8s
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: matrix-k8s
+          path: results/

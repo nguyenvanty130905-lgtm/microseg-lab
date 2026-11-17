@@ -1,0 +1,47 @@
+name: microseg
+
+services:
+  web:
+    build: ./web
+    image: microseg/web:1
+    container_name: web
+    ports: ["8080:80"]
+    networks: [frontend, backend]
+    depends_on: [api]
+
+  api:
+    build: ./api
+    image: microseg/api:1
+    container_name: api
+    environment:
+      DB_HOST: db
+      DB_NAME: notes
+      DB_USER: app
+      DB_PASSWORD: app_pw
+    networks: [backend, data]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: db
+    environment:
+      POSTGRES_DB: notes
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app_pw
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d notes"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    networks: [data]
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+  data:
+    driver: bridge
+    internal: true

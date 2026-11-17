@@ -1,0 +1,19 @@
+# CHI ap dung tren cum dung Cilium (xem README, phan nang cao).
+# web chi duoc goi GET /health, GET /notes, POST /notes toi api. DELETE bi chan (HTTP 403).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata: {name: api-l7, namespace: microseg}
+spec:
+  endpointSelector:
+    matchLabels: {tier: api}
+  ingress:
+  - fromEndpoints:
+    - matchLabels: {tier: web}
+    toPorts:
+    - ports:
+      - {port: "8000", protocol: TCP}
+      rules:
+        http:
+        - {method: GET, path: "/health"}
+        - {method: GET, path: "/notes"}
+        - {method: POST, path: "/notes"}

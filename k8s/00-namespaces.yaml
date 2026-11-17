@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: microseg
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: untrusted

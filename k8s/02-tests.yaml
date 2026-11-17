@@ -1,0 +1,35 @@
+# Pod kiem thu: chi co nhan "tier" (khong co "app") nen KHONG nam trong Service.
+apiVersion: v1
+kind: Pod
+metadata: {name: tester, namespace: external, labels: {role: tester}}
+spec:
+  containers:
+  - {name: t, image: "microseg/netcheck:1", imagePullPolicy: IfNotPresent, command: ["sleep", "infinity"]}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: tester, namespace: untrusted, labels: {role: tester}}
+spec:
+  containers:
+  - {name: t, image: "microseg/netcheck:1", imagePullPolicy: IfNotPresent, command: ["sleep", "infinity"]}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: tester-web, namespace: microseg, labels: {tier: web, role: tester}}
+spec:
+  containers:
+  - {name: t, image: "microseg/netcheck:1", imagePullPolicy: IfNotPresent, command: ["sleep", "infinity"]}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: tester-api, namespace: microseg, labels: {tier: api, role: tester}}
+spec:
+  containers:
+  - {name: t, image: "microseg/netcheck:1", imagePullPolicy: IfNotPresent, command: ["sleep", "infinity"]}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: tester-db, namespace: microseg, labels: {tier: db, role: tester}}
+spec:
+  containers:
+  - {name: t, image: "microseg/netcheck:1", imagePullPolicy: IfNotPresent, command: ["sleep", "infinity"]}

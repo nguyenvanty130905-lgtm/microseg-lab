@@ -1,0 +1,50 @@
+# web: chi nhan tu namespace "external" cong 80; chi di ra api cong 8000
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: web-policy, namespace: microseg}
+spec:
+  podSelector: {matchLabels: {tier: web}}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: external
+    ports:
+    - {protocol: TCP, port: 80}
+  egress:
+  - to:
+    - podSelector: {matchLabels: {tier: api}}
+    ports:
+    - {protocol: TCP, port: 8000}
+---
+# api: chi nhan tu web cong 8000; chi di ra db cong 5432
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: api-policy, namespace: microseg}
+spec:
+  podSelector: {matchLabels: {tier: api}}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {matchLabels: {tier: web}}
+    ports:
+    - {protocol: TCP, port: 8000}
+  egress:
+  - to:
+    - podSelector: {matchLabels: {tier: db}}
+    ports:
+    - {protocol: TCP, port: 5432}
+---
+# db: chi nhan tu api cong 5432; khong co luat Egress nen default-deny chan moi ket noi di ra
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: db-policy, namespace: microseg}
+spec:
+  podSelector: {matchLabels: {tier: db}}
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector: {matchLabels: {tier: api}}
+    ports:
+    - {protocol: TCP, port: 5432}
