@@ -37,6 +37,10 @@ spec:
         image: microseg/api:1
         imagePullPolicy: IfNotPresent
         ports: [{containerPort: 8000}]
+        readinessProbe:
+          tcpSocket: {port: 8000}
+          initialDelaySeconds: 3
+          periodSeconds: 3
         env:
         - {name: DB_HOST, value: db}
         - {name: DB_NAME, value: notes}
